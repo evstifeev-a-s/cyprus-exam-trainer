@@ -2461,7 +2461,28 @@ $('moreBtn').addEventListener('click',()=>startSession(true));
 $('trainStop').addEventListener('click',()=>{ Q=[]; cur=null; endSession(false); });
 
 // Конец подхода (full=false — прерван кнопкой): ошибки запоминаются для кнопки «Перечитать ошибки подхода».
+// Подход хранится в браузере после каждой карточки: если страница перезагрузится (iPhone выгрузил вкладку,
+// закрыл браузер), подход продолжится с той же карточки. Хранится 3 часа.
+const SKEY='cyprus-exam-session.v1', SESS_TTL=3*3600e3;
+function saveSess(){
+  if(!sess||!cur) return;
+  const q=[cur].concat(Q).map(e=>({id:e.c.id,need:e.need,clean:e.clean,study:!!e.study,fresh:!!e.fresh,ahead:!!e.ahead}));
+  try{ localStorage.setItem(SKEY,JSON.stringify({t:Date.now(),s:{done:sess.done,total:sess.total,from:sess.from||'',title:sess.title||'',miss:Array.from(sess.miss||[])},q})); }catch(e){}
+}
+function dropSess(){ try{ localStorage.removeItem(SKEY); }catch(e){} }
+function restoreSess(){
+  let j=null; try{ j=JSON.parse(localStorage.getItem(SKEY)||'null'); }catch(e){}
+  if(!j||!j.q||!j.q.length||Date.now()-j.t>SESS_TTL){ dropSess(); return false; }
+  const card=id=>BYID[id]||(id.indexOf('w:')===0?wordCard(id.slice(2)):null);
+  const q=j.q.map(x=>{ const c=card(x.id); return c?{c,need:x.need,clean:x.clean,study:x.study,fresh:x.fresh,ahead:x.ahead}:null; }).filter(Boolean);
+  if(!q.length){ dropSess(); return false; }
+  Q=q; sess={done:j.s.done,total:j.s.total,miss:new Set(j.s.miss||[])};
+  if(j.s.from) sess.from=j.s.from; if(j.s.title) sess.title=j.s.title;
+  $('trainHome').hidden=true; $('trainStage').hidden=false; nextCard();
+  return true;
+}
 function endSession(full){
+  dropSess();
   const s=sess; sess=null; cur=null; if(!s) { renderHome(); return; }
   const miss=new Set(Array.from(s.miss||[]).filter(id=>BYID[id]));
   if(miss.size) lastMiss=miss;
@@ -2499,6 +2520,7 @@ function nextCard(){
   $('fAns').hidden=!cur.study; $('actStudy').hidden=!cur.study; $('actReveal').hidden=cur.study; $('actRate').hidden=true;
   (cur.study?$('studyNext'):$('revealBtn')).focus({preventScroll:true});
   keepTop($('trainStage'));
+  saveSess();
 }
 // После длинной раскрытой связки страница могла остаться прокрученной вниз: следующая карточка начинается с верха.
 function keepTop(el){ if(el.getBoundingClientRect&&el.getBoundingClientRect().top<0) el.scrollIntoView({block:'start'}); }
@@ -2515,12 +2537,16 @@ function rate(r){
   const e=cur;
   if(r===0){
     e.clean=false; e.need=e.fresh?2:1;
-    const s=Object.assign({b:0,due:0},st(e.c)); s.m=(s.m||0)+1; s.lm=Date.now(); put(e.c.id,s); save();
+    // Если подход оборвётся, ошибка вернётся в следующем подходе.
+    const s=Object.assign({b:0,due:0},st(e.c)); s.m=(s.m||0)+1; s.lm=Date.now(); if(s.b>0) s.due=s.lm; put(e.c.id,s); save();
     if(sess&&sess.miss) sess.miss.add(e.c.id);
     Q.push(e);
   } else {
     if(r===1) e.clean=false;
-    e.need--; if(e.need>0) Q.push(e); else finish(e);
+    e.need--;
+    // Новая карточка, вспомненная верно хотя бы раз, сразу считается начатой: оборванный подход её не теряет.
+    if(e.fresh&&e.need>0&&!(st(e.c).b>0)){ const s=Object.assign({b:0,due:0},st(e.c)); s.b=1; s.due=dueFrom(Date.now(),1); put(e.c.id,s); save(); }
+    if(e.need>0) Q.push(e); else finish(e);
   }
   nextCard();
 }
@@ -3042,6 +3068,7 @@ window.addEventListener&&window.addEventListener('pagehide',flush);
 load();
 show('train');
 save();
+restoreSess();
 startSync();
 
 </script>
