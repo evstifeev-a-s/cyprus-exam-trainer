@@ -70,6 +70,8 @@ input[type=search]{flex:1 1 160px;min-width:0}
 .full{margin-top:6px;padding:10px 12px;background:var(--surface2);border-radius:10px;display:flex;flex-direction:column;gap:4px}
 .full-h{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:700}
 .full-gr{font-weight:600;font-size:16px;line-height:1.35;overflow-wrap:anywhere}
+/* Полный вопрос до ответа: открывается кнопкой под ключом, только греческий текст. */
+.fqpre{font-weight:600;font-size:17px;line-height:1.35;padding:10px 12px;background:var(--surface2);border-radius:10px;overflow-wrap:anywhere}
 .full-ru{font-size:14px;color:var(--muted);overflow-wrap:anywhere}
 /* Зацепка — короткая фраза-мнемоника под ответом, с полосой акцентного цвета слева. */
 .zz{font-size:14px;line-height:1.4;border-left:3px solid var(--accent);padding:2px 0 2px 10px;overflow-wrap:anywhere}
@@ -260,6 +262,7 @@ button.stat{text-align:left;font-weight:400;font-size:inherit;padding:8px 10px;b
     <div class="flash" id="flash">
       <div class="meta" id="fMeta"></div>
       <div class="cue" id="fCue" lang="el"></div>
+      <button class="lnk" id="fFqBtn" hidden aria-expanded="false">Полный вопрос по-гречески</button><div class="fqpre" id="fFqPre" lang="el" hidden></div>
       <div class="ans" id="fAns" hidden><div class="a-gr" id="fA" lang="el"></div><div class="a-ru" id="fR"></div><div class="zz" id="fZ" hidden><span class="zz-h">Зацепка</span><span id="fZt"></span></div><div class="zz mine" id="fM" hidden><span class="zz-h">Моя зацепка</span><span id="fMt"></span></div>
         <button class="lnk" id="fZbtn" hidden>Своя зацепка</button>
         <div class="zedit" id="fZE" hidden><textarea id="fZin" rows="2" maxlength="160" placeholder="Своя связь слова с ответом, коротко" aria-label="Своя зацепка"></textarea><div class="row"><button id="fZsave" class="primary">Сохранить</button><button id="fZdel">Убрать</button><button id="fZcancel">Отмена</button></div></div>
@@ -291,6 +294,7 @@ button.stat{text-align:left;font-weight:400;font-size:inherit;padding:8px 10px;b
       <div class="cue" id="cCue" lang="el"></div>
       <div class="arrow">→</div>
       <div class="shown" id="cShown" lang="el"></div>
+      <button class="lnk" id="cFqBtn" hidden aria-expanded="false">Полный вопрос по-гречески</button><div class="fqpre" id="cFqPre" lang="el" hidden></div>
       <div class="ans" id="cAns" hidden><div class="verdict" id="cVerdict"></div><div class="a-gr" id="cA" lang="el"></div><div class="a-ru" id="cR"></div><div class="zz" id="cZ" hidden><span class="zz-h">Зацепка</span><span id="cZt"></span></div><div class="zz mine" id="cM" hidden><span class="zz-h">Моя зацепка</span><span id="cMt"></span></div>
         <div class="full" id="cFull" hidden><div class="full-h" id="cFullH">Вопрос полностью</div><div class="full-gr" id="cFq" lang="el"></div><div class="full-ru" id="cFr"></div></div>
         <div class="cl" id="cL" hidden></div><div class="clb" id="cLb" hidden></div></div>
@@ -346,7 +350,7 @@ button.stat{text-align:left;font-weight:400;font-size:inherit;padding:8px 10px;b
 <ul>
   <li><b>План до экзамена — на главной во «Вспомнить».</b> Укажи дату экзамена. Тренажёр сам разложит ещё не начатые карточки по оставшимся дням и скажет, что делать сегодня. Кнопка «Начать подход» берёт всё, что пора повторить, и новое по норме дня, по 40 за подход.</li>
   <li><b>Карточка.</b> Вспомни ответ, открой его и честно оцени себя. Новая карточка сначала показывается с ответом, проверка будет позже в том же подходе. Под ответом — перевод, «Зацепка» (есть у 228 карточек) и вопрос полностью.</li>
-  <li><b>Вопрос целиком, как на экзамене.</b> Галочка под кнопкой подхода показывает вместо короткого ключа полный греческий вопрос, а под ответом — его перевод. Так тренируется то, что будет на экзамене: прочитать вопрос по-гречески и понять, о чём он. Включай её, когда карточки уже знакомы, — в последние дни.</li>
+  <li><b>Вопрос целиком, как на экзамене.</b> Галочка под кнопкой подхода показывает вместо короткого ключа полный греческий вопрос, а под ответом — его перевод. Так тренируется то, что будет на экзамене: прочитать вопрос по-гречески и понять, о чём он. Включай её, когда карточки уже знакомы, — в последние дни. Для одной карточки есть кнопка «Полный вопрос по-гречески» под ключом: она показывает весь вопрос до ответа, а перевод вопроса — после ответа.</li>
   <li><b>Перевод слова.</b> Долго нажми на любое слово, на компьютере — правой кнопкой мыши. Окно покажет начальную форму, перевод, синонимы и другие названия: у «αγρινό» это «μουφλόν». Если перевод может подсказать ещё закрытый ответ, окно сначала спросит. Например, перевод «ΚΕΠ» — это и есть расшифровка, о которой спрашивает карточка. Остальные слова, около 97%, переводятся сразу.</li>
   <li><b>Слова.</b> «Добавить в словарь» в окне перевода кладёт слово во вкладку «Слова», там оно повторяется как карточка.</li>
   <li><b>Своя зацепка.</b> На карточке, где ты уже ошибался, под ответом есть кнопка «Своя зацепка». Запиши свою связь слова с ответом — она будет показываться дальше во всех режимах, с зелёной полосой.</li>
@@ -2265,6 +2269,20 @@ function tags(c){ return c.v?'<span class="tag v">сверить</span>':''; }
 // а под ответом остаётся только его перевод.
 function examCue(c){ return !!S.o.fq&&!c.word&&!!c.fq; }
 function cueText(c){ return examCue(c)?c.fq:c.q; }
+// Полный вопрос по-гречески до ответа (p: 'f' — «Вспомнить», 'c' — «Верно или нет»): кнопка под ключом,
+// открывает вопрос только у этой карточки. Перевод вопроса — после ответа, в «Вопрос полностью».
+// Нет кнопки, если вопрос и так целиком (галочка «вопрос целиком»), если карточка показана с ответом или полного вопроса нет.
+function preFq(p,c,on){
+  const can=!!(c&&on&&c.fq&&!examCue(c)), b=$(p+'FqBtn'), x=$(p+'FqPre');
+  b.hidden=!can; x.hidden=true; x.textContent=can?c.fq:'';
+  b.dataset.l=c&&c.word?'Пример по-гречески':'Полный вопрос по-гречески'; b.dataset.h=c&&c.word?'Скрыть пример':'Скрыть полный вопрос';
+  b.textContent=b.dataset.l; b.setAttribute('aria-expanded','false');
+}
+// Нажатие на кнопку и на сам текст не открывает ответ (нажатие на карточку в «Вспомнить» его открывает).
+['f','c'].forEach(p=>{
+  $(p+'FqBtn').addEventListener('click',e=>{ e.stopPropagation(); const b=$(p+'FqBtn'), x=$(p+'FqPre'); x.hidden=!x.hidden; b.textContent=x.hidden?b.dataset.l:b.dataset.h; b.setAttribute('aria-expanded',String(!x.hidden)); });
+  $(p+'FqPre').addEventListener('click',e=>e.stopPropagation());
+});
 function fillFull(p,c){
   const ex=examCue(c);
   $(p+'Full').hidden=!c.fq; $(p+'FullH').textContent=c.word?'Пример из карточек':ex?'Перевод вопроса':'Вопрос полностью';
@@ -2542,7 +2560,7 @@ function nextCard(){
   $('trainLeft').textContent=(sess.title?'«'+sess.title+'» · ':'')+'Осталось '+(Q.length+1)+' · сделано '+sess.done+' из '+sess.total;
   $('fMeta').innerHTML=(c.word?'Словарь':esc(DATA[c.sec].title)+' '+tags(c))+(cur.study?' <span class="tag">запомни</span>':'')+
     (m>=3?' <span class="tag v">'+(c.word?'трудное слово':'трудная')+(hook?': после ответа прочитай зацепку вслух':': придумай зацепку и скажи вслух')+'</span>':'');
-  $('fCue').textContent=cueText(c);
+  $('fCue').textContent=cueText(c); preFq('f',c,!cur.study);
   $('fA').textContent=c.a; $('fR').textContent=c.r; fillZ('f',c); fillFull('f',c); fillLinks('f',c); zBtn(c);
   $('fAns').hidden=!cur.study; $('actStudy').hidden=!cur.study; $('actReveal').hidden=cur.study; $('actRate').hidden=true;
   (cur.study?$('studyNext'):$('revealBtn')).focus({preventScroll:true});
@@ -2551,7 +2569,7 @@ function nextCard(){
 }
 // После длинной раскрытой связки страница могла остаться прокрученной вниз: следующая карточка начинается с верха.
 function keepTop(el){ if(el.getBoundingClientRect&&el.getBoundingClientRect().top<0) el.scrollIntoView({block:'start'}); }
-function reveal(){ if(!cur||cur.study||!$('fAns').hidden) return; $('fAns').hidden=false; $('actReveal').hidden=true; $('actRate').hidden=false; }
+function reveal(){ if(!cur||cur.study||!$('fAns').hidden) return; preFq('f',null); $('fAns').hidden=false; $('actReveal').hidden=true; $('actRate').hidden=false; }
 $('revealBtn').addEventListener('click',reveal);
 $('flash').addEventListener('click',reveal);
 // Показ новой карточки: проверка будет после всех остальных карточек очереди.
@@ -2637,7 +2655,7 @@ function nextCheck(){
   ccur={c,truth,shown:truth?c.a:pick(lurePool(c))};
   $('checkLeft').textContent='Утверждение '+(cscore.n+1)+' из '+cscore.total+' · верных ответов '+cscore.ok;
   $('cMeta').innerHTML=esc(DATA[c.sec].title)+' '+tags(c);
-  $('cCue').textContent=cueText(c); $('cShown').textContent=ccur.shown;
+  $('cCue').textContent=cueText(c); $('cShown').textContent=ccur.shown; preFq('c',c,true);
   $('cAns').hidden=true; $('cActAnswer').hidden=false; $('cActNext').hidden=true;
   keepTop($('checkStage'));
 }
@@ -2649,7 +2667,7 @@ $('cActAnswer').addEventListener('click',e=>{
   const v=$('cVerdict'); v.className='verdict '+(right?'good':'miss');
   v.textContent=(right?'Правильно. ':'Ошибка. ')+(ccur.truth?'Утверждение верное.':'Утверждение ложное, на самом деле:');
   $('cA').textContent=c.a; $('cR').textContent=c.r; fillZ('c',c); fillFull('c',c); fillLinks('c',c);
-  $('cAns').hidden=false; $('cActAnswer').hidden=true; $('cActNext').hidden=false; $('checkNext').focus({preventScroll:true});
+  preFq('c',null); $('cAns').hidden=false; $('cActAnswer').hidden=true; $('cActNext').hidden=false; $('checkNext').focus({preventScroll:true});
 });
 $('checkNext').addEventListener('click',nextCheck);
 
