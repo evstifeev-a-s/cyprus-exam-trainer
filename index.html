@@ -360,9 +360,9 @@ button.stat{text-align:left;font-weight:400;font-size:inherit;padding:8px 10px;b
   <li><b>Норма на день</b> — ещё не начатые карточки, делённые на оставшиеся дни учёбы. День накануне экзамена в учёбу не входит: в него только повторение. Пропустил день — норма следующих дней вырастет. Сделал больше, кнопкой «ещё 20 новых сверх плана», — уменьшится.</li>
   <li><b>Сначала главные.</b> Дополнительные карточки входят в план, только если вместе с ними в день выходит не больше 120 новых. Иначе их можно брать сверх плана.</li>
   <li><b>Повторения</b> тоже зависят от даты. Уверенно отвеченная карточка возвращается всё реже: через сутки, двое, четыре, восемь. Но промежуток не больше половины времени до последнего прохода: за неделю до экзамена знакомое идёт раз в 2–3 дня. За двое суток до последнего прохода слабые карточки повторяются каждый день, а уверенные ждут сразу его.</li>
-  <li><b>Накануне экзамена</b> новое не берётся. Днём — 15 минут «Связки перед экзаменом» со спрятанными ответами: «Одно число — разные ответы», «Похожие фамилии», «15 и 16 августа, 1 октября», «1 июля — четыре разных года». С 18:00 — последний полный проход: всё, что подошло бы позже, тренажёр ставит на этот вечер. Верно отвеченное в этот вечер до экзамена больше не показывается.</li>
+  <li><b>Накануне экзамена</b> план новое не предлагает. Днём — 15 минут «Связки перед экзаменом» со спрятанными ответами: «Одно число — разные ответы», «Похожие фамилии», «15 и 16 августа, 1 октября», «1 июля — четыре разных года». С 18:00 — последний полный проход: всё, что подошло бы позже, тренажёр ставит на этот вечер. Верно отвеченное в этот вечер до экзамена больше не показывается, а выученное заново и ошибки вернутся утром, за 3 часа до экзамена.</li>
+  <li><b>Любой шаг — в любой момент.</b> План только подсказывает. «Главные карточки» и «Дополнительные» дают подход из 40 новых этого вида, а когда все начаты — проход по ним. «Накануне экзамена» проходит все начатые: сначала то, что пора повторить, потом давно не виденное. «Связки перед экзаменом», «Верно или нет» и «Утро экзамена» открываются всегда.</li>
   <li><b>Утро экзамена:</b> плитка «ошибки за сутки» → перечитать, 10–15 минут. Новое не открывать: заученное накануне похожее мешает вспоминать.</li>
-  <li><b>Если до экзамена меньше суток</b>, а большая часть главных карточек не начата, тренажёр не запрещает новое. Он предлагает взять главные до 18:00, а потом сделать последний проход.</li>
   <li><b>Своя выборка вместо плана</b> — внизу главной: разделы, только главное, сколько новых за подход. Вернуться к плану — кнопкой там же.</li>
 </ul>
 
@@ -2182,7 +2182,8 @@ function T(){
 function dueFrom(now,b){
   const t=T(), h=HOURS[b]*H;
   if(now>=t.after) return now+h;
-  if(now>=t.final) return t.after;
+  // Последний вечер и ночь: новое и ошибки (ступень 1) — ещё раз утром, за 3 часа до экзамена; остальное — после экзамена.
+  if(now>=t.final){ const morning=t.E-3*H; return b<=1&&now<morning?morning:t.after; }
   // За двое суток до последнего прохода уверенные карточки (ступень 3 и выше) ждут сразу его: лишний повтор накануне не нужен.
   const toFinal=t.final-now;
   if(b>=3&&toFinal<=48*H) return t.final;
@@ -2326,9 +2327,9 @@ function todayText(pd){
   switch(pd.mode){
     case 'after': return 'Экзамен '+ex+' прошёл. Если впереди следующий — поставь его дату выше, план пересчитается.';
     case 'during': return 'Экзамен сегодня. Удачи.';
-    case 'exam': return 'Утро экзамена. Новое не открывай. Перечитай ошибки за сутки, 10–15 минут, и иди на экзамен.';
-    case 'final': return 'Последний полный проход: всё, что пора повторить, подходами до нуля. Потом «Верно или нет». И лечь вовремя.';
-    case 'review': return 'Завтра экзамен, сегодня новое не начинай. Утром — повторение. Днём 15 минут «Связки» перед экзаменом со спрятанными ответами. С 18:00 — последний полный проход.';
+    case 'exam': return 'Утро экзамена. Новое лучше не открывать. Кнопка выше даёт выученное вчера вечером и вечерние ошибки — пройди их, потом при желании перечитай ошибки за сутки.';
+    case 'final': return 'Последний полный проход: всё, что пора повторить, подходами до нуля. Потом «Верно или нет». Новое — по желанию, в шагах ниже: выученное сегодня вернётся утром. И лечь вовремя.';
+    case 'review': return 'Завтра экзамен. По плану сегодня только повторение, новое — по желанию, в шагах ниже. Утром — повторение. Днём 15 минут «Связки» перед экзаменом со спрятанными ответами. С 18:00 — последний полный проход.';
     case 'cram': return 'До экзамена меньше суток, а '+pd.leftMain.length+' главных '+cardsWord(pd.leftMain.length)+' ещё не начаты. Всё не успеть: бери главные подходами по 40 до 18:00, потом — последний проход.';
   }
   const last=pd.days===1?'Сегодня последний день нового: завтра только повторение.':'Новое — ещё '+pd.days+' '+plural(pd.days,'день','дня','дней')+', последний — '+fmtDay(t.stop-1)+'.';
@@ -2348,6 +2349,8 @@ function renderSteps(pd){
   const t=pd.t, mode=pd.mode, learn=mode==='learn'||mode==='cram', h=[];
   const row=(cls,tt,n,d,bar)=>'<li class="step '+cls+'"><div><span class="st-top"><span class="st-t">'+esc(tt)+'</span>'+(n?'<span class="st-n">'+n+'</span>':'')+'</span>'+
     (bar!=null?'<span class="bar"><i style="width:'+bar+'%"></i></span>':'')+(d?'<span class="st-d">'+esc(d)+'</span>':'')+'</div></li>';
+  const goBar=(to,cls,tt,n,d,bar)=>'<li class="step act '+cls+'"><button data-go="'+to+'"><span class="st-top"><span class="st-t">'+esc(tt)+'</span>'+(n?'<span class="st-n">'+n+'</span>':'')+'</span>'+
+    (bar!=null?'<span class="bar"><i style="width:'+bar+'%"></i></span>':'')+(d?'<span class="st-d">'+esc(d)+'</span>':'')+'</button></li>';
   const go=(to,tt,n,d)=>'<li class="step act"><button data-go="'+to+'"><span class="st-top"><span class="st-t">'+esc(tt)+'</span>'+(n?'<span class="st-n">'+n+'</span>':'')+'</span>'+(d?'<span class="st-d">'+esc(d)+'</span>':'')+'</button></li>';
   const pct=(a,b)=>b?Math.round(a/b*100):100;
   if(learn&&usePlan()&&pd.quota){
@@ -2359,26 +2362,25 @@ function renderSteps(pd){
   if(!pd.leftMain.length) dm='все начаты';
   else if(mode==='learn') dm='около '+pd.perDayMain+' в день, по '+fmtDay(t.stop-1);
   else if(mode==='cram') dm='сегодня до 18:00 — сколько успеешь';
-  else if(mode==='after') dm='не начато '+pd.leftMain.length+'; для следующего экзамена укажи его дату';
-  else dm='не начато '+pd.leftMain.length+': новое уже не берём';
+  else dm='не начато '+pd.leftMain.length;
   if(!le) de='все начаты';
   else if(mode==='learn') de=pd.withExtra?'входят в план после главных':'в план не входят: со всеми в день выходило бы '+pd.perDayAll+' новых, а посильно до '+CAP+'. Можно брать «ещё '+MORE+' новых» сверх плана';
-  else if(mode==='after') de='не начато '+le;
-  else de='новое уже не берём';
-  h.push(row(pd.leftMain.length?'':'done','Главные карточки',sm+' из '+MAIN_N,dm,pct(sm,MAIN_N)));
-  h.push(row(le?'':'done','Дополнительные',se+' из '+EXTRA_N,de,pct(se,EXTRA_N)));
+  else de='не начато '+le;
+  // Главные и дополнительные — кнопки: подход из 40 новых этого вида (и его повторений), а когда все начаты — проход по ним.
+  const pick=(k,left)=>left?'нажми — подход из '+Math.min(SESSION_NEW,left)+' новых':'нажми — пройти начатые ещё раз';
+  h.push(goBar('pick-main',pd.leftMain.length?'':'done','Главные карточки',sm+' из '+MAIN_N,dm+' · '+pick('main',pd.leftMain.length),pct(sm,MAIN_N)));
+  h.push(goBar('pick-extra',le?'':'done','Дополнительные',se+' из '+EXTRA_N,de+' · '+pick('extra',le),pct(se,EXTRA_N)));
   if(mode==='learn'||mode==='cram'){
     const ls=LINKS.map(linkState), checked=ls.filter(x=>x.done).length;
     h.push(go('links-ready','Связки','готовы '+readyLinks()+' · проверено '+checked+' из '+LINKS.length,'вечером 10–15 минут: прочитать связку, потом «Проверить себя»'));
-  } else if(mode==='review'||mode==='final') h.push(go('links-pre','Связки перед экзаменом','',PRE_LINKS.join(', ')+'. Со спрятанными ответами.'));
+  }
+  h.push(go('links-pre','Связки перед экзаменом','',PRE_LINKS.join(', ')+'. Со спрятанными ответами.'));
   const cl=S.o.cl;
-  if(mode!=='exam'&&mode!=='during') h.push(go('check','Верно или нет',cl?'последний итог '+cl.ok+' из '+cl.n:'','по тому, что уже учил'));
+  h.push(go('check','Верно или нет',cl?'последний итог '+cl.ok+' из '+cl.n:'','по тому, что уже учил'));
   const dc=dictCards();
   if(dc.length){ const wd=wordsDue().length; h.push(go('words','Слова',wd?'ждут '+wd:'в словаре '+dc.length,'после карточек, когда повторять уже нечего')); }
-  if(mode==='learn'||mode==='cram'||mode==='review'||mode==='final')
-    h.push(row(mode==='learn'?'':'cur','Накануне экзамена','',fmtDay(t.stop)+(mode==='cram'?': главные до 18:00':': только повторение')+', с 18:00 — последний полный проход'));
-  if(mode!=='after'&&mode!=='during')
-    h.push(go('miss','Утро экзамена: ошибки за сутки',missed24().length+' '+cardsWord(missed24().length),'перечитать 10–15 минут; новое не открывать'));
+  h.push(go('pick-all','Накануне экзамена: проход по всему','','по плану — '+fmtDay(t.stop)+', с 18:00. Нажми — пройти начатые сейчас: сначала то, что пора повторить, потом давно не виденное'));
+  h.push(go('miss','Утро экзамена: ошибки за сутки',missed24().length+' '+cardsWord(missed24().length),'перечитать 10–15 минут'));
   $('steps').innerHTML=h.join('');
 }
 $('steps').addEventListener('click',e=>{
@@ -2386,6 +2388,7 @@ $('steps').addEventListener('click',e=>{
   const g=b.dataset.go;
   if(g==='links-ready'||g==='links-pre'){ S.o.lk=g==='links-ready'?'ready':'pre'; if(g==='links-pre') S.o.lh=true; save(); $('lsearch').value=''; $('linksNote').textContent=''; show('links'); }
   else if(g==='miss') openMissed24();
+  else if(g.indexOf('pick-')===0) startPick(g.slice(5));
   else show(g);
 });
 function openMissed24(){ listIds=null; $('search').value=''; $('fMiss').checked=true; allOpen=true; $('toggleAll').textContent='Скрыть всё'; show('list'); }
@@ -2414,7 +2417,7 @@ function renderHome(){
   $('startBtn').disabled=(n===0);
   $('startBtn').textContent=n?('Начать подход: '+(p.due.length?p.due.length+' на повторение'+(p.take.length?', ':''):'')+(p.take.length?p.take.length+' '+plural(p.take.length,'новая','новых','новых'):'')):'Сейчас повторять нечего';
   // «Ещё 20 новых сверх плана» — когда норма на сегодня выполнена, а не начатые карточки есть и новое ещё можно брать.
-  const canMore=plan&&(pd.mode==='learn'||pd.mode==='cram')&&pd.leftToday===0&&pd.left.length>0;
+  const canMore=plan&&pd.leftToday===0&&pd.left.length>0;
   $('moreBtn').hidden=!canMore; $('moreBtn').textContent='Ещё '+Math.min(MORE,pd.left.length)+' новых сверх плана';
   const waiting=p.dueAll.length-p.due.length;
   let note='';
@@ -2461,6 +2464,25 @@ function startSession(more){
   nextCard();
 }
 $('startBtn').addEventListener('click',()=>startSession(false));
+// Подход из шага плана, в любой момент: kind — main, extra или all.
+// Есть не начатые этого вида — повторения этого вида и до 40 новых. Нет — проход по начатым: сначала то, что пора повторить
+// (слабые первыми), потом давно не виденное. Карточка, которой ещё не пора, при верном ответе расписание не сдвигает.
+function startPick(kind){
+  const now=Date.now(), of=c=>!c.off&&(kind==='main'?c.main:kind==='extra'?!c.main:true);
+  const pool=CARDS.filter(of), fresh=pool.filter(c=>!started(c)), due=pool.filter(c=>isDue(st(c),now));
+  let q;
+  if(kind!=='all'&&fresh.length){
+    q=shuffle(due).slice(0,MAX_DUE).map(c=>({c,need:1,clean:true,study:false,fresh:false}))
+      .concat(shuffle(fresh).slice(0,SESSION_NEW).map(c=>({c,need:2,clean:true,study:true,fresh:true})));
+  } else {
+    const ds=due.sort((a,b)=>(st(a).b-st(b).b)||((st(a).u||0)-(st(b).u||0)));
+    const rest=pool.filter(c=>started(c)&&!isDue(st(c),now)).sort((a,b)=>(st(a).u||0)-(st(b).u||0));
+    q=ds.concat(rest).slice(0,MAX_DUE).map(c=>({c,need:1,clean:true,study:false,fresh:false,ahead:!isDue(st(c),now)}));
+  }
+  if(!q.length) return;
+  Q=q; sess={done:0,total:Q.length,miss:new Set(),title:kind==='main'?'Главные':kind==='extra'?'Дополнительные':'Проход по всему'};
+  $('trainHome').hidden=true; $('trainStage').hidden=false; nextCard();
+}
 $('moreBtn').addEventListener('click',()=>startSession(true));
 // Подход, начатый из «Связок» или «Слов», по окончании возвращает на ту же вкладку.
 $('trainStop').addEventListener('click',()=>{ Q=[]; cur=null; endSession(false); });
@@ -2558,7 +2580,7 @@ function rate(r){
 function finish(e){
   const s=Object.assign({b:0,due:0},st(e.c));
   // Проверка по связке раньше срока: верный ответ расписание не сдвигает, ошибка возвращает карточку через 8 часов.
-  if(e.ahead){ if(!e.clean){ s.b=1; s.due=dueFrom(Date.now(),1); put(e.c.id,s); save(); } sess.done++; return; }
+  if(e.ahead){ if(!e.clean){ s.b=1; s.due=dueFrom(Date.now(),1); } put(e.c.id,s); save(); sess.done++; return; }
   if(e.fresh) s.b=1;
   else s.b=e.clean?Math.min((s.b||1)+1,MAXB):1;
   s.due=dueFrom(Date.now(),s.b);
