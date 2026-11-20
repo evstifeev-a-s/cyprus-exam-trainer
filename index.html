@@ -340,7 +340,7 @@ button.stat{text-align:left;font-weight:400;font-size:inherit;padding:8px 10px;b
 </section>
 
 <section id="v-how" class="how" hidden>
-  <div id="howBody"><p>Тренажёр к экзамену о Кипре: история, география, государственное устройство, культура, текущие события. На экзамене вопросы задают по-гречески, ответ выбирают из вариантов. В тренажёре 490 карточек: 354 главные — ближе всего к вопросам экзаменов 2026 года — и 136 дополнительных.</p>
+  <div id="howBody"><p>Тренажёр к экзамену о Кипре: история, география, государственное устройство, культура, текущие события. На экзамене вопросы задают по-гречески, ответ выбирают из вариантов. В тренажёре 490 карточек: 338 главных — ближе всего к вопросам экзаменов 2026 года, 130 дополнительных и 22 «пары-ловушки», где правильный ответ стоит рядом с похожим неверным. Пары в подходы не попадают: они повторяют обычные карточки. Их можно прочитать во вкладке «Список» или выбрать разделом в своей выборке.</p>
 
 <h3>Как устроен тренажёр</h3>
 <ul>
@@ -418,7 +418,7 @@ button.stat{text-align:left;font-weight:400;font-size:inherit;padding:8px 10px;b
 // v — переменное (сверить перед экзаменом), p:1 — главное, n:1 — добавлено в ноябре 2026 (служебная пометка, в интерфейсе не показывается),
 // g — группа однотипных ответов (из неё берутся ложные варианты), w — готовые ложные варианты.
 const DATA = [
-{title:"Пары-ловушки", n:1, items:[
+{title:"Пары-ловушки", n:1, x:1, items:[
 {q:"16 Αυγούστου 1960 ή 1 Οκτωβρίου;", a:"16/8 — ανακήρυξη· 1/10 — Ημέρα Ανεξαρτησίας (αργία)", r:"16 августа 1960 — провозглашение независимости; 1 октября — День независимости (праздник)", z:"Αύγουστος и Ανακήρυξη — обе на Α (16/8); Ημέρα Ανεξαρτησίας с выходным — 1 октября", fq:"Τι έγινε στις 16 Αυγούστου 1960 και τι γιορτάζεται την 1η Οκτωβρίου;", fr:"Что произошло 16 августа 1960 года и что празднуют 1 октября?", p:1},
 {q:"80 ή 56 έδρες;", a:"80 συνολικά· 56 εκλέγονται· 24 κενές (τουρκοκυπριακές)", r:"80 мест всего; 56 избираются; 24 пустуют (турко-кипрские)", fq:"Τι σημαίνουν οι 80 και τι οι 56 έδρες της Βουλής των Αντιπροσώπων;", fr:"Что означают 80 мест и что — 56 мест в Палате представителей?", p:1},
 {q:"15 Ιουλίου ή 20 Ιουλίου 1974;", a:"15/7 — πραξικόπημα· 20/7 — τουρκική εισβολή", r:"15 июля — переворот; 20 июля — турецкое вторжение", z:"Вторжение — «второе» событие, 20 июля; первым был переворот, 15 июля", fq:"Τι έγινε στις 15 Ιουλίου 1974 και τι στις 20 Ιουλίου 1974;", fr:"Что произошло 15 июля 1974 года и что — 20 июля 1974 года?", p:1},
@@ -2161,7 +2161,7 @@ const LF={"α":[[0]],"αβαείο":[[1]],"άβακα":[[2,"родительны
 function hid(s){ let h=5381; for(let i=0;i<s.length;i++) h=((h<<5)+h+s.charCodeAt(i))>>>0; return h.toString(36); }
 const CARDS=[];
 DATA.forEach((s,si)=>s.items.forEach(it=>{
-  it.sec=si; it.id=hid(it.k||it.q); it.isNew=!!(s.n||it.n); it.main=!it.isNew||it.p===1; CARDS.push(it);
+  it.sec=si; it.id=hid(it.k||it.q); it.isNew=!!(s.n||it.n); it.off=!!s.x; it.main=!it.off&&(!it.isNew||it.p===1); CARDS.push(it);
 }));
 
 // ---------- расписание повторений и дата экзамена ----------
@@ -2197,14 +2197,17 @@ function isDue(s,now){ const t=T(); return s.b>0&&(s.due<=now||(now>=t.final&&no
 // Сначала главные карточки; дополнительные входят в план, если с ними в день выходит не больше CAP новых.
 // Пропущенный день поднимает норму следующих, сделанное сверх нормы её снижает.
 const CAP=120, SESSION_NEW=40;
-const MAIN_N=CARDS.filter(c=>c.main).length, EXTRA_N=CARDS.length-MAIN_N;
+// off — раздел вне плана («Пары-ловушки»): в подходы не попадает, читается во вкладке «Список».
+const MAIN_N=CARDS.filter(c=>c.main).length, EXTRA_N=CARDS.filter(c=>!c.main&&!c.off).length;
 function started(c){ return st(c).b>0; }
 function usePlan(){ return S.o.plan!==false; }
 function planDay(){
   const t=T(), now=Date.now(), today=dayStart(now);
-  const left=CARDS.filter(c=>!started(c)), leftMain=left.filter(c=>c.main);
+  const left=CARDS.filter(c=>!c.off&&!started(c)), leftMain=left.filter(c=>c.main);
   // Сколько было не начато в начале дня: от этого считается норма, а сделанное за день — разница с тем, что осталось сейчас.
-  let dq=S.o.dq; if(!dq||dq.d!==today){ dq=S.o.dq={d:today,all:left.length,main:leftMain.length}; save(); }
+  let dq=S.o.dq; if(!dq||dq.d!==today){ dq=S.o.dq={d:today,all:left.length,main:leftMain.length,v:2}; save(); }
+  // Снимок сделан до того, как «Пары-ловушки» вывели из плана: вычесть их, иначе сделанное за день завышено.
+  else if(dq.v!==2){ const off=CARDS.filter(c=>c.off&&!started(c)); dq.all=Math.max(left.length,dq.all-off.length); dq.main=Math.max(leftMain.length,dq.main-off.filter(c=>c.p===1).length); dq.v=2; save(); }
   const days=Math.max(0,Math.round((t.stop-today)/DAY));
   const r={t,now,days,left,leftMain,quota:0,done:0,leftToday:0,pool:[],withExtra:false,perDayAll:0,perDayMain:0};
   if(now>=t.after) r.mode='after';
@@ -2251,7 +2254,8 @@ const $=id=>document.getElementById(id);
 function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
 function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
 function esc(s){ return String(s).replace(/[&<>"]/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
-function inScope(c){ return (!S.o.main||c.main) && (!S.o.secs||S.o.secs.indexOf(c.sec)>=0); }
+// Раздел вне плана попадает в выборку, только если выбран явно.
+function inScope(c){ return (!S.o.main||c.main) && (S.o.secs?S.o.secs.indexOf(c.sec)>=0:!c.off); }
 function scopeCards(){ return CARDS.filter(inScope); }
 function tags(c){ return c.v?'<span class="tag v">сверить</span>':''; }
 // Полный вопрос с переводом: показывается вместе с ответом во всех режимах.
@@ -2294,10 +2298,11 @@ const MAX_DUE=120, MORE=20;
 function planSession(more){
   const now=Date.now();
   let sc, np;
-  if(more){ sc=CARDS; np=MORE; }
+  if(more){ sc=CARDS.filter(c=>!c.off); np=MORE; }
   else if(usePlan()){ const pd=planDay(); sc=pd.pool; np=Math.min(SESSION_NEW,pd.leftToday); }
   else { sc=scopeCards(); np=S.o.np; }
-  const dueAll=CARDS.filter(c=>isDue(st(c),now));
+  // Карточки вне плана повторяются, только если их раздел выбран в своей выборке.
+  const dueAll=CARDS.filter(c=>isDue(st(c),now)&&(!c.off||(!more&&!usePlan()&&inScope(c))));
   const fresh=sc.filter(c=>!started(c));
   const take=shuffle(fresh.filter(c=>c.main)).concat(shuffle(fresh.filter(c=>!c.main))).slice(0,np);
   return {sc,dueAll,due:shuffle(dueAll).slice(0,MAX_DUE),fresh,take};
@@ -2990,8 +2995,10 @@ function mergeState(a,b){ // a — копия в браузере, b — в ак
   if(Object.keys(lq).length) o.lq=lq; else delete o.lq;
   // Снимок «не начато на начало дня»: на только что открытой пустой копии он завышен, поэтому берётся меньший,
   // а если пришли отметки из аккаунта, а снимка за этот день там нет, — считается заново.
-  const ad=ao.dq, bd=bo.dq;
-  if(ad&&bd&&ad.d===bd.d) o.dq={d:ad.d,all:Math.min(ad.all,bd.all),main:Math.min(ad.main,bd.main)};
+  // v:2 — снимок уже без «Пар-ловушек»; снимки разных видов не смешиваются, побеждает новый вид.
+  const ad=ao.dq, bd=bo.dq, v2=x=>!!x&&x.v===2;
+  if(ad&&bd&&ad.d===bd.d&&v2(ad)===v2(bd)) o.dq=Object.assign({},ad,{all:Math.min(ad.all,bd.all),main:Math.min(ad.main,bd.main)});
+  else if(ad&&bd&&ad.d===bd.d) o.dq=v2(ad)?ad:bd;
   else if(bd&&(!ad||bd.d>ad.d)) o.dq=bd;
   else if(ad&&fromB) delete o.dq;
   else if(ad) o.dq=ad; else delete o.dq;
